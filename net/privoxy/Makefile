@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=privoxy
-PKG_VERSION:=3.0.34
+PKG_VERSION:=4.0.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-stable-src.tar.gz
 PKG_SOURCE_URL:=@SF/ijbswa
-PKG_HASH:=e6ccbca1656f4e616b4657f8514e33a70f6697e9d7294356577839322a3c5d2c
+PKG_HASH:=c08e2ba0049307017bf9d8a63dd2a0dfb96aa0cdeb34ae007776e63eba62a26f
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-stable
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -58,7 +58,7 @@ define Package/privoxy
   URL:=http://www.privoxy.org/
   USERID:=privoxy=8118:privoxy=8118
   MENU:=1
-  DEPENDS:=+!PRIVOXY_no_pcre:libpcre2 +!PRIVOXY_no_pthread:libpthread +!PRIVOXY_no_zlib:zlib
+  DEPENDS:=+!PRIVOXY_no_pcre:libpcre2 +!PRIVOXY_no_pthread:libpthread +!PRIVOXY_no_zlib:zlib +libmbedtls
 endef
 
 # shown in LuCI package description
@@ -83,6 +83,7 @@ define Package/privoxy/config
 endef
 
 CONFIGURE_ARGS += \
+	--with-mbedtls \
 	--sysconfdir=/etc/privoxy \
 	$(if $(CONFIG_IPV6),,--disable-ipv6-support) \
 	\
