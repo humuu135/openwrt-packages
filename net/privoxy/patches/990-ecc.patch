@@ -1,0 +1,25 @@
+Index: privoxy-4.0.0-stable/ssl.c
+===================================================================
+--- privoxy-4.0.0-stable.orig/ssl.c
++++ privoxy-4.0.0-stable/ssl.c
+@@ -1007,8 +1007,7 @@ static int generate_key(struct client_st
+    /*
+     * Preparing path for key file and other properties for generating key
+     */
+-   key_opt.type        = MBEDTLS_PK_RSA;
+-   key_opt.rsa_keysize = RSA_KEYSIZE;
++   key_opt.type        = MBEDTLS_PK_ECKEY;
+ 
+    key_opt.key_file_path = make_certs_path(csp->config->certificate_directory,
+       (char *)csp->http->hash_of_host_hex, KEY_FILE_TYPE);
+@@ -1049,8 +1048,8 @@ static int generate_key(struct client_st
+       goto exit;
+    }
+ 
+-   ret = mbedtls_rsa_gen_key(mbedtls_pk_rsa(key), mbedtls_ctr_drbg_random,
+-      &ctr_drbg, (unsigned)key_opt.rsa_keysize, RSA_KEY_PUBLIC_EXPONENT);
++   ret = mbedtls_ecp_gen_key(MBEDTLS_ECP_DP_SECP256R1, mbedtls_pk_ec(key),
++      mbedtls_ctr_drbg_random, &ctr_drbg);
+    if (ret != 0)
+    {
+       mbedtls_strerror(ret, err_buf, sizeof(err_buf));
