@@ -1,0 +1,55 @@
+Index: acme.sh-3.0.7/acme.sh
+===================================================================
+--- acme.sh-3.0.7.orig/acme.sh
++++ acme.sh-3.0.7/acme.sh
+@@ -114,6 +114,7 @@ DOH_CLOUDFLARE=1
+ DOH_GOOGLE=2
+ DOH_ALI=3
+ DOH_DP=4
++DOH_CUSTOM=99
+ 
+ HIDDEN_VALUE="[hidden](please add '--output-insecure' to see this value)"
+ 
+@@ -4085,6 +4086,23 @@ _ns_lookup_dp() {
+   _ns_lookup_impl "$_cf_ep" "$_cf_ld" "$_cf_ld_type"
+ }
+ 
++_ns_is_available_custom() {
++  local availableurl=$(eval "/sbin/uci get acme.@doh[0].availableurl") >/dev/null 2>&1 || availableurl=
++  if _get "${availableurl}" "" 10 >/dev/null; then
++    return 0
++  else
++    return 1
++  fi
++}
++
++_ns_lookup_custom() {
++  local queryurl=$(eval "/sbin/uci get acme.@doh[0].queryurl") >/dev/null 2>&1 || queryurl=
++  _cf_ld="$1"
++  _cf_ld_type="$2"
++  _cf_ep="${queryurl}"
++  _ns_lookup_impl "$_cf_ep" "$_cf_ld" "$_cf_ld_type"
++}
++
+ _ns_select_doh() {
+   if [ -z "$DOH_USE" ]; then
+     _debug "Detect dns server first."
+@@ -4100,6 +4118,9 @@ _ns_select_doh() {
+     elif _ns_is_available_dp; then
+       _debug "Use dns pod doh server"
+       export DOH_USE=$DOH_DP
++    elif _ns_is_available_custom; then
++      _debug "Use dns custom doh server"
++      export DOH_USE=$DOH_CUSTOM
+     else
+       _err "No doh"
+     fi
+@@ -4117,6 +4138,8 @@ _ns_lookup() {
+     _ns_lookup_ali "$@"
+   elif [ "$DOH_USE" = "$DOH_DP" ]; then
+     _ns_lookup_dp "$@"
++  elif [ "$DOH_USE" = "$DOH_CUSTOM" ]; then
++    _ns_lookup_custom "$@"
+   else
+     _err "Unknown doh provider: DOH_USE=$DOH_USE"
+   fi
