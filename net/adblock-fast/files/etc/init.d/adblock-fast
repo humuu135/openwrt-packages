@@ -2496,8 +2496,7 @@ adb_pause() {
 allow() { load_validate_config 'config' adb_allow "'$*'"; }
 boot() {
 #	ubus -t 30 wait_for network.interface 2>/dev/null
-	adbf_boot_flag=1
-	rc_procd start_service 'on_boot' && service_started 'on_boot'
+	{ rc_procd start_service 'on_boot' && service_started 'on_boot'; } &
 }
 check() { load_validate_config 'config' adb_check "'$*'"; }
 check_tld() { load_validate_config 'config' adb_check_tld "'$*'"; }
@@ -2541,26 +2540,8 @@ service_triggers() {
 		procd_add_raw_trigger "interface.*.up" 5000 "/etc/init.d/${packageName}" start && output_okn || output_failn
 		json set status 'statusTriggerBootWait'
 	else
-	procd_open_validate
-		load_validate_config
-		load_validate_file_url_section
-	procd_close_validate
-		config_load "$packageName"
-		config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'
-		network_flush_cache
-		network_find_wan wan
-		wan="${wan:-wan}"
-		if [ "$procd_trigger_wan6" -ne '0' ]; then
-			network_find_wan6 wan6
-			wan6="${wan6:-wan6}"
-		fi
-		output 1 "Setting trigger${wan6:+s} for $wan ${wan6:+$wan6 }"
-		output 2 "[TRIG] Setting trigger${wan6:+s} for $wan ${wan6:+$wan6 }"
-		for i in $wan $wan6; do
-			procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" start && output_okn || output_failn
-		done
+		output "Setting trigger (config.change) "
 		procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload
-		[ -z "$(json get status)" ] && json set status 'statusTriggerStartWait'
 	fi
 }
 sizes() { load_validate_config 'config' adb_sizes "''"; }
