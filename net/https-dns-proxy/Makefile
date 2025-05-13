@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=https-dns-proxy
-PKG_VERSION:=2023.12.26
+PKG_VERSION:=custom-2023.12.26
 PKG_RELEASE:=4
 
 PKG_SOURCE_PROTO:=git
