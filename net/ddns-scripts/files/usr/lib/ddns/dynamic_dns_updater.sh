@@ -333,6 +333,9 @@ fi
 	}
 }
 
+# initial delay
+/sbin/service network-ready start >/dev/null 2>&1
+
 # let's check if there is already an IP registered on the web
 get_registered_ip REGISTERED_IP "NO_RETRY"
 ERR_LAST=$?
