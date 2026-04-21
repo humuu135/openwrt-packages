@@ -192,6 +192,7 @@ append_boot() {
 }
 
 boot() {
+	ubus -t 30 wait_for network.interface 2>/dev/null
 	rc_procd start_service 'on_boot' && service_started 'on_boot'
 }
 
@@ -265,6 +266,9 @@ start_instance() {
 		config_load 'dhcp'
 		config_foreach dnsmasq_doh_server 'dnsmasq' 'add' "${listen_addr}" "${listen_port}"
 		config_foreach dnsmasq_instance_append_force_dns_port 'dnsmasq'
+	elif [ "$dnsmasq_config_update" = '-' ]; then
+		# do nothing
+		:
 	elif is_alnum "$dnsmasq_config_update"; then
 		config_load 'dhcp'
 		for i in $dnsmasq_config_update; do
@@ -387,19 +391,7 @@ service_triggers() {
 		output "Setting trigger (on_boot) "
 		procd_add_raw_trigger "interface.*.up" 5000 "/etc/init.d/${packageName}" reload 'on_interface_up' && output_okn || output_failn
 	else
-		. "${IPKG_INSTROOT}/lib/functions/network.sh"
-		network_flush_cache
-		network_find_wan wan
-		wan="${wan:-wan}"
-		if [ -n "$procd_trigger_wan6" ]; then
-			network_find_wan6 wan6
-			wan6="${wan6:-wan6}"
-		fi
-		output "Setting trigger${wan6:+s} for $wan ${wan6:+${wan6} }"
-		for i in $wan $wan6; do
-			procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" reload 'on_interface_trigger' && output_ok || output_fail
-		done
-		output '\n'
+		output "Setting trigger (config.change) "
 		procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload 'on_config_change'
 	fi
 }
@@ -497,6 +489,9 @@ dhcp_backup() {
 		create)
 			if [ "$dnsmasq_config_update" = "*" ]; then
 				config_foreach _dnsmasq_create_server_backup 'dnsmasq'
+			elif [ "$dnsmasq_config_update" = "-" ]; then
+				# do nothing
+				:
 			elif [ -n "$dnsmasq_config_update" ]; then
 				for i in $dnsmasq_config_update; do
 					if [ -n "$(uci_get 'dhcp' "@dnsmasq[$i]")" ]; then
